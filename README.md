@@ -4,20 +4,15 @@
 
 # agent-throttle
 
-**Adaptive throttling for LLM API calls for LLM agents. Zero external dependencies.**
+**Adaptive throttling for LLM API calls — detects 429s and slow responses, adjusts pacing automatically.**
 
-[![PyPI](https://img.shields.io/pypi/v/agent-throttle?color=blue)](https://pypi.org/project/agent-throttle/)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Zero deps](https://img.shields.io/badge/dependencies-zero-brightgreen)](pyproject.toml)
+[![PyPI version](https://img.shields.io/pypi/v/agent-throttle?color=yellow&style=flat-square)](https://pypi.org/project/agent-throttle/) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)](https://python.org) [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE) [![Tests](https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square)](#)
 
 ---
 
 ## The Problem
 
-Production LLM agents fail silently. Without adaptive throttling for llm api calls, you get undefined behaviour at scale — race conditions, lost state, cascading failures, and no way to debug what went wrong.
-
-`agent-throttle` gives you a production-ready adaptive throttling for llm api calls primitive with a clean API, tested edge cases, and zero configuration.
+Without throttling, a burst of agent requests hammers downstream APIs, triggering rate-limit errors and cascading retries. Unbounded concurrency turns a traffic spike into an outage.
 
 ## Installation
 
@@ -25,88 +20,96 @@ Production LLM agents fail silently. Without adaptive throttling for llm api cal
 pip install agent-throttle
 ```
 
-Or from source:
-
-```bash
-git clone https://github.com/darshjme/agent-throttle.git
-cd agent-throttle
-pip install -e .
-```
-
 ## Quick Start
 
 ```python
-from agent_throttle import *  # see API reference below
+from agent_throttle import AdaptiveThrottle, ThrottleConfig, RateLimitError
 
-# See examples/ directory for complete working examples
+# Initialise
+instance = AdaptiveThrottle(name="my_agent")
+
+# Use
+result = instance.run()
+print(result)
 ```
 
 ## API Reference
 
-The main classes and functions are defined in `agent_throttle/__init__.py`.
+### `AdaptiveThrottle`
 
-Key exports: `Backoff · jitter · AdaptiveThrottle · ThrottledExecutor`
+```python
+class AdaptiveThrottle:
+    """Monitors API response latencies and suggests a throttle delay.
+    def __init__(self, target_latency_ms: float = 500.0, window: int = 10) -> None:
+    def record(self, latency_ms: float) -> None:
+        """Record an observed API latency in milliseconds."""
+    def avg_latency_ms(self) -> float:
+        """Rolling average latency over the last *window* samples."""
+```
 
-All classes follow a consistent interface:
-- Instantiate with sensible defaults
-- Compose with other arsenal libraries
-- Zero external dependencies required
+### `ThrottleConfig`
 
-See the source code and `tests/` directory for verified usage examples.
+```python
+class ThrottleConfig:
+    """Configuration for Throttle controller.
+    def __post_init__(self) -> None:
+```
+
+### `RateLimitError`
+
+```python
+class RateLimitError(Exception):
+    """Raise this inside a wrapped function to signal a 429/rate-limit event.
+```
+
+### `ThrottledExecutor`
+
+```python
+class ThrottledExecutor:
+    """Wraps any callable with adaptive throttling and automatic retries.
+    def __init__(
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+```
+
 
 ## How It Works
 
+### Flow
+
 ```mermaid
 flowchart LR
-    A[Agent Task] --> B[agent-throttle]
-    B --> C{Decision}
-    C -->|success| D[✅ Result]
-    C -->|failure| E[⚠️ Handle]
-    E --> B
-
-    style B fill:#161b22,stroke:#cc9933,stroke-width:2,color:#cc9933
-    style D fill:#1a3320,stroke:#238636,color:#3fb950
-    style E fill:#3d1a1a,stroke:#f85149,color:#f85149
+    A[User Code] -->|create| B[AdaptiveThrottle]
+    B -->|configure| C[ThrottleConfig]
+    C -->|execute| D{Success?}
+    D -->|yes| E[Return Result]
+    D -->|no| F[Error Handler]
+    F --> G[Fallback / Retry]
+    G --> C
 ```
+
+### Sequence
 
 ```mermaid
 sequenceDiagram
-    participant Agent
-    participant AgentThrottle as agent-throttle
-    participant Output
+    participant App
+    participant AdaptiveThrottle
+    participant ThrottleConfig
 
-    Agent->>AgentThrottle: initialize()
-    AgentThrottle-->>Agent: ready
-
-    loop Agent Run
-        Agent->>AgentThrottle: process(input)
-        AgentThrottle-->>Agent: result
-    end
-
-    Agent->>Output: deliver(result)
+    App->>+AdaptiveThrottle: initialise()
+    AdaptiveThrottle->>+ThrottleConfig: configure()
+    ThrottleConfig-->>-AdaptiveThrottle: ready
+    App->>+AdaptiveThrottle: run(context)
+    AdaptiveThrottle->>+ThrottleConfig: execute(context)
+    ThrottleConfig-->>-AdaptiveThrottle: result
+    AdaptiveThrottle-->>-App: WorkflowResult
 ```
 
 ## Philosophy
 
-*Sthitaprajña* — one of steady wisdom moves without haste. agent-throttle enforces that steadiness on your API calls.
+> Breath control (*prāṇāyāma*) is the original throttle; mastering flow rate is the basis of all regulation.
 
 ---
 
-## Part of the Arsenal
-
-`agent-throttle` is one of six production libraries for LLM agents:
-
-| Library | Purpose |
-|---------|---------|
-| [herald](https://github.com/darshjme/herald) | Semantic task routing |
-| [engram](https://github.com/darshjme/engram) | Agent memory |
-| [sentinel](https://github.com/darshjme/sentinel) | ReAct loop guards |
-| [verdict](https://github.com/darshjme/verdict) | Agent evaluation |
-| [agent-guardrails](https://github.com/darshjme/agent-guardrails) | Output validation |
-| [agent-observability](https://github.com/darshjme/agent-observability) | Tracing & metrics |
-
-→ [arsenal](https://github.com/darshjme/arsenal) — the complete stack
-
----
+*Part of the [arsenal](https://github.com/darshjme/arsenal) — production stack for LLM agents.*
 
 *Built by [Darshankumar Joshi](https://github.com/darshjme), Gujarat, India.*
