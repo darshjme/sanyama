@@ -1,0 +1,22 @@
+Metadata-Version: 2.4
+Name: agent-throttle
+Version: 1.0.0
+Summary: Adaptive throttling for LLM API calls — detects 429s and slow responses, adjusts pacing automatically.
+License: MIT
+Project-URL: Homepage, https://github.com/example/agent-throttle
+Project-URL: Repository, https://github.com/example/agent-throttle
+Keywords: llm,throttle,rate-limit,backoff,openai,anthropic
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Internet :: WWW/HTTP
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: pytest-mock>=3; extra == "dev"
