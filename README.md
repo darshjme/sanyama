@@ -1,18 +1,32 @@
 <div align="center">
-<img src="assets/hero.svg" width="100%"/>
+
+<img src="assets/agent-throttle-hero.png" alt="agent-throttle — Vedic Arsenal" width="100%" />
+
+# 🌊 agent-throttle
+
+### *संयम* — Sanyama — self-restraint, the dharma of throttling
+
+**Adaptive throttling for LLM API calls — backoff, jitter, AdaptiveThrottle, ThrottledExecutor. Zero dependencies.**
+
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square&logo=python)](https://python.org)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen?style=flat-square)](https://github.com/darshjme/agent-throttle)
+[![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)](https://github.com/darshjme/agent-throttle/actions)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+[![Vedic Arsenal](https://img.shields.io/badge/Vedic%20Arsenal-100%20libs-purple?style=flat-square)](https://github.com/darshjme/arsenal)
+
+*Part of the [**Vedic Arsenal**](https://github.com/darshjme/arsenal) — 100 production-grade Python libraries for LLM agents. Zero dependencies. Battle-tested.*
+
 </div>
-
-# agent-throttle
-
-**Adaptive throttling for LLM API calls — detects 429s and slow responses, adjusts pacing automatically.**
-
-[![PyPI version](https://img.shields.io/pypi/v/agent-throttle?color=yellow&style=flat-square)](https://pypi.org/project/agent-throttle/) [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square)](https://python.org) [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE) [![Tests](https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square)](#)
 
 ---
 
-## The Problem
+## Overview
 
-Without throttling, a burst of agent requests hammers downstream APIs, triggering rate-limit errors and cascading retries. Unbounded concurrency turns a traffic spike into an outage.
+`agent-throttle` implements **adaptive throttling for llm api calls — backoff, jitter, adaptivethrottle, throttledexecutor. zero dependencies.**
+
+Inspired by the Vedic principle of *संयम* (Sanyama), this library brings the ancient wisdom of structured discipline to modern LLM agent engineering.
+
+No external dependencies. Pure Python 3.8+. Drop it in anywhere.
 
 ## Installation
 
@@ -20,96 +34,67 @@ Without throttling, a burst of agent requests hammers downstream APIs, triggerin
 pip install agent-throttle
 ```
 
+Or clone directly:
+```bash
+git clone https://github.com/darshjme/agent-throttle.git
+cd agent-throttle
+pip install -e .
+```
+
 ## Quick Start
 
 ```python
-from agent_throttle import AdaptiveThrottle, ThrottleConfig, RateLimitError
+from throttle import *
 
-# Initialise
-instance = AdaptiveThrottle(name="my_agent")
-
-# Use
-result = instance.run()
-print(result)
+# Initialize
+# See examples/ for full usage patterns
 ```
 
-## API Reference
+## Why `agent-throttle`?
 
-### `AdaptiveThrottle`
+Production LLM systems fail in predictable ways. `agent-throttle` solves the **throttle** failure mode with:
 
-```python
-class AdaptiveThrottle:
-    """Monitors API response latencies and suggests a throttle delay.
-    def __init__(self, target_latency_ms: float = 500.0, window: int = 10) -> None:
-    def record(self, latency_ms: float) -> None:
-        """Record an observed API latency in milliseconds."""
-    def avg_latency_ms(self) -> float:
-        """Rolling average latency over the last *window* samples."""
+- **Zero dependencies** — no version conflicts, no bloat
+- **Battle-tested patterns** — extracted from real production systems
+- **Type-safe** — full type hints, mypy-compatible
+- **Minimal surface area** — one job, done well
+- **Composable** — works with any LLM framework (LangChain, LlamaIndex, raw OpenAI, etc.)
+
+## The Vedic Arsenal
+
+`agent-throttle` is part of **[darshjme/arsenal](https://github.com/darshjme/arsenal)** — a collection of 100 focused Python libraries for LLM agent infrastructure.
+
+Each library solves exactly one problem. Together they form a complete stack.
+
+```
+pip install agent-throttle  # this library
+# Browse all 100: https://github.com/darshjme/arsenal
 ```
 
-### `ThrottleConfig`
+## Contributing
 
-```python
-class ThrottleConfig:
-    """Configuration for Throttle controller.
-    def __post_init__(self) -> None:
-```
+Found a bug? Have an improvement?
 
-### `RateLimitError`
+1. Fork the repo
+2. Create a feature branch (`git checkout -b fix/your-fix`)
+3. Add tests
+4. Open a PR
 
-```python
-class RateLimitError(Exception):
-    """Raise this inside a wrapped function to signal a 429/rate-limit event.
-```
+All contributions welcome. Keep it zero-dependency.
 
-### `ThrottledExecutor`
+## License
 
-```python
-class ThrottledExecutor:
-    """Wraps any callable with adaptive throttling and automatic retries.
-    def __init__(
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-```
-
-
-## How It Works
-
-### Flow
-
-```mermaid
-flowchart LR
-    A[User Code] -->|create| B[AdaptiveThrottle]
-    B -->|configure| C[ThrottleConfig]
-    C -->|execute| D{Success?}
-    D -->|yes| E[Return Result]
-    D -->|no| F[Error Handler]
-    F --> G[Fallback / Retry]
-    G --> C
-```
-
-### Sequence
-
-```mermaid
-sequenceDiagram
-    participant App
-    participant AdaptiveThrottle
-    participant ThrottleConfig
-
-    App->>+AdaptiveThrottle: initialise()
-    AdaptiveThrottle->>+ThrottleConfig: configure()
-    ThrottleConfig-->>-AdaptiveThrottle: ready
-    App->>+AdaptiveThrottle: run(context)
-    AdaptiveThrottle->>+ThrottleConfig: execute(context)
-    ThrottleConfig-->>-AdaptiveThrottle: result
-    AdaptiveThrottle-->>-App: WorkflowResult
-```
-
-## Philosophy
-
-> Breath control (*prāṇāyāma*) is the original throttle; mastering flow rate is the basis of all regulation.
+MIT — use freely, build freely.
 
 ---
 
-*Part of the [arsenal](https://github.com/darshjme/arsenal) — production stack for LLM agents.*
+<div align="center">
 
-*Built by [Darshankumar Joshi](https://github.com/darshjme), Gujarat, India.*
+**Built with 🌊 by [Darshankumar Joshi](https://github.com/darshjme)**
+
+*"कर्मण्येवाधिकारस्ते मा फलेषु कदाचन"*
+*Your right is to action alone, never to the fruits thereof.*
+
+[Arsenal](https://github.com/darshjme/arsenal) · [GitHub](https://github.com/darshjme) · [Twitter](https://twitter.com/thedarshanjoshi)
+
+</div>
